@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
@@ -7,10 +7,14 @@ import { apiKey, authenticate } from "../shopify.server";
 export const loader = async ({ request }) => {
   const { session } = await authenticate.admin(request);
 
-  // API key (client ID) is public; never send the API secret or access token to the browser.
+  // API key (client ID) is public. The access token is store-specific and is only
+  // shown to staff who are already logged in to this store's admin. Never send the
+  // app's API secret to the browser.
   return {
     apiKey,
     shopDomain: session.shop,
+    accessToken: session.accessToken || "",
+    tokenExpires: session.expires ? new Date(session.expires).toISOString() : null,
   };
 };
 
@@ -121,7 +125,11 @@ export const action = async ({ request }) => {
 };
 
 export default function Index() {
-  const { apiKey, shopDomain } = useLoaderData();
+  const { apiKey, shopDomain, accessToken, tokenExpires } = useLoaderData();
+  const [showToken, setShowToken] = useState(false);
+  const maskedToken = accessToken
+    ? `${accessToken.slice(0, 6)}${"•".repeat(20)}${accessToken.slice(-4)}`
+    : "Not available";
   const fetcher = useFetcher();
   const shopify = useAppBridge();
   const isLoading =
@@ -155,6 +163,28 @@ export default function Index() {
             <s-table-row>
               <s-table-cell>Shop domain</s-table-cell>
               <s-table-cell>{shopDomain}</s-table-cell>
+            </s-table-row>
+            <s-table-row>
+              <s-table-cell>Access token</s-table-cell>
+              <s-table-cell>
+                <s-stack direction="inline" gap="small-200" alignItems="center">
+                  <s-text>{showToken ? accessToken : maskedToken}</s-text>
+                  {accessToken && (
+                    <s-button
+                      variant="tertiary"
+                      onClick={() => setShowToken((v) => !v)}
+                    >
+                      {showToken ? "Hide" : "Show"}
+                    </s-button>
+                  )}
+                </s-stack>
+              </s-table-cell>
+            </s-table-row>
+            <s-table-row>
+              <s-table-cell>Token expires</s-table-cell>
+              <s-table-cell>
+                {tokenExpires ? new Date(tokenExpires).toLocaleString() : "Never"}
+              </s-table-cell>
             </s-table-row>
           </s-table-body>
         </s-table>
