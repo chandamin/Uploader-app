@@ -1,13 +1,17 @@
 import { useEffect } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
+import { apiKey, authenticate } from "../shopify.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
-  return null;
+  // API key (client ID) is public; never send the API secret or access token to the browser.
+  return {
+    apiKey,
+    shopDomain: session.shop,
+  };
 };
 
 export const action = async ({ request }) => {
@@ -117,6 +121,7 @@ export const action = async ({ request }) => {
 };
 
 export default function Index() {
+  const { apiKey, shopDomain } = useLoaderData();
   const fetcher = useFetcher();
   const shopify = useAppBridge();
   const isLoading =
@@ -135,6 +140,25 @@ export default function Index() {
       <s-button slot="primary-action" onClick={generateProduct}>
         Generate a product
       </s-button>
+
+      <s-section heading="App details" padding="none">
+        <s-table>
+          <s-table-header-row>
+            <s-table-header>Field</s-table-header>
+            <s-table-header>Value</s-table-header>
+          </s-table-header-row>
+          <s-table-body>
+            <s-table-row>
+              <s-table-cell>API key</s-table-cell>
+              <s-table-cell>{apiKey || "Not set"}</s-table-cell>
+            </s-table-row>
+            <s-table-row>
+              <s-table-cell>Shop domain</s-table-cell>
+              <s-table-cell>{shopDomain}</s-table-cell>
+            </s-table-row>
+          </s-table-body>
+        </s-table>
+      </s-section>
 
       <s-section heading="Congrats on creating a new Shopify app 🎉">
         <s-paragraph>

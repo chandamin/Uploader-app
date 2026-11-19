@@ -32,3 +32,5 @@ export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+// Public client ID — safe to show in the UI (unlike the API secret).
+export const apiKey = process.env.SHOPIFY_API_KEY || "";
