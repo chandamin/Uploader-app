@@ -15,6 +15,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY . .
 
-RUN npm run build
+# Generate the Prisma client at build time so startup only runs migrations.
+RUN npx prisma generate && npm run build
 
 CMD ["npm", "run", "docker-start"]
