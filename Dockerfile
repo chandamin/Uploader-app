@@ -1,5 +1,7 @@
-FROM node:22-alpine
-RUN apk add --no-cache openssl
+FROM node:22-slim
+# Debian (glibc) instead of Alpine: Rollup's native parser fails on musl with
+# "Code is nested too deeply". Prisma needs openssl.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 3000
 
